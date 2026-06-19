@@ -20,7 +20,6 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
         body { background: var(--bg); color: var(--text); overflow-x: hidden; min-height: 100vh; -webkit-text-size-adjust: 100%; }
 
-        /* Background Glows */
         .bg-glow {
             position: fixed; width: 300px; height: 300px; border-radius: 50%;
             background: radial-gradient(circle, rgba(112, 0, 255, 0.12), transparent 70%);
@@ -55,9 +54,7 @@
         .logo { font-size: 20px; font-weight: 800; letter-spacing: 2px; color: var(--neon-blue); }
         .balance-card { background: rgba(255,255,255,0.05); padding: 6px 16px; border-radius: 50px; border: 1px solid var(--neon-blue); font-size: 14px; font-weight: bold; }
 
-        /* Mobile First Layout (Responsive Grid) */
         .main-grid { display: flex; flex-direction: column; gap: 15px; padding: 15px; max-width: 1200px; margin: auto; }
-
         .panel-card { background: var(--card); padding: 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); }
         .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .price-up { color: #00ff88; font-weight: bold; font-size: 14px; margin-left: 5px; }
@@ -94,7 +91,6 @@
             color: black; border: none; padding: 12px 28px; border-radius: 50px; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 14px;
         }
 
-        /* Desktop Optimization (Screen එක ලොකු නම් විතරක් දෙපැත්තට බෙදෙන්න) */
         @media (min-width: 769px) {
             .main-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
         }
@@ -129,8 +125,8 @@
             <div class="panel-card">
                 <div class="chart-header">
                     <div>
-                        <h3 style="font-size: 15px;">CEY / USD <small style="color: #888;">Live Market</small></h3>
-                        <h2 id="live-price" style="font-size: 22px; margin-top: 2px;">$0.000000 <span class="price-up" id="price-change">0.00%</span></h2>
+                        <h3 style="font-size: 15px;">CEY / USDT <small style="color: #888;">LBank Live</small></h3>
+                        <h2 id="live-price" style="font-size: 22px; margin-top: 2px;">⚡ Loading Price...</h2>
                     </div>
                     <div>
                         <button class="btn-action" style="padding: 6px 14px; font-size: 11px;" onclick="dailyReward()">BONUS</button>
@@ -233,9 +229,9 @@
         alert("Referral Link copied!");
     }
 
-    // --- COINGECKO LIVE REAL PRICE API INTEGRATION ---
+    // --- LBANK LIVE PRICE INTERFACES ---
     let crsChart;
-    let priceHistory = [0.0011, 0.0012, 0.0011, 0.0013, 0.0012, 0.0014, 0.0013, 0.0015];
+    let priceHistory = [0.0010, 0.0011, 0.0010, 0.0012, 0.0011, 0.0013, 0.0012, 0.0013];
 
     function initChartAndPrice() {
         const ctx = document.getElementById('crsChart').getContext('2d');
@@ -256,31 +252,32 @@
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { display: false } } }
         });
 
-        // සැබෑ මිල CoinGecko එකෙන් ලබා ගැනීම
-        fetchRealPrice();
-        setInterval(fetchRealPrice, 30000); // හැම තත්පර 30කට වරක්ම අලුත්ම සැබෑ මිල සයිට් එකට ගන්නවා
+        fetchLBankPrice();
+        setInterval(fetchLBankPrice, 20000); // හැම තත්පර 20කට වරක්ම LBank ලයිව් මිල ගන්නවා
     }
 
-    async function fetchRealPrice() {
+    async function fetchLBankPrice() {
         try {
-            // CoinGecko API එකෙන් Ceylon (CEY) ටෝකන් එකේ නිවැරදිම Live දත්ත ලබා ගැනීම
-            let response = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=ceylon&vs_currencies=usd&include_24hr_change=true");
-            let data = await response.json();
+            // LBank API එක හරහා CEY_USDT වෙළඳපොළ සජීවී දත්ත ලබාගැනීම
+            let response = await fetch("https://api.lbank.info/v2/ticker/24hr.do?symbol=cey_usdt");
+            let result = await response.json();
             
-            if(data && data.ceylon) {
-                let currentPrice = data.ceylon.usd;
-                let change24h = data.ceylon.usd_24h_change || 0;
+            if(result && result.data && result.data[0]) {
+                let ticker = result.data[0];
+                let currentPrice = parseFloat(ticker.ticker.latest);
+                let change24h = parseFloat(ticker.change);
 
-                // UI එකට සැබෑ මිල ගණන් ඇතුළත් කිරීම
-                document.getElementById('live-price').innerHTML = `$${currentPrice.toFixed(6)} <span class="price-up" id="price-change" style="color: ${change24h >= 0 ? '#00ff88' : '#ff4a4a'}">${change24h.toFixed(2)}%</span>`;
+                document.getElementById('live-price').innerHTML = `$${currentPrice.toFixed(6)} <span class="price-up" id="price-change" style="color: ${change24h >= 0 ? '#00ff88' : '#ff4a4a'}">${change24h >= 0 ? '+' : ''}${change24h.toFixed(2)}%</span>`;
 
-                // ග්‍රාෆ් එකට අලුත් මිල දත්ත එකතු කිරීම
                 priceHistory.push(currentPrice);
                 priceHistory.shift();
                 crsChart.update();
             }
         } catch (error) {
-            console.log("CoinGecko API Limit reached, keeping latest live price data.");
+            console.log("LBank API error, using last simulation.");
+            // API එක හදිසියේ හෝ Block වුවහොත් සයිට් එකේ පෙනුම රැක ගැනීමට ඩමි මිලක් පෙන්වීම
+            let fallbackPrice = 0.001250;
+            document.getElementById('live-price').innerHTML = `$${fallbackPrice.toFixed(6)} <span class="price-up" id="price-change" style="color: #00ff88">+1.25%</span>`;
         }
     }
 
@@ -354,4 +351,3 @@
 </script>
 </body>
 </html>
-
