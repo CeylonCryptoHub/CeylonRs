@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ceylon RS | Professional Web3 Gaming Hub</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg: #050810;
+            --card: rgba(16, 22, 35, 0.85);
+            --neon-blue: #00f2ff;
+            --neon-purple: #7000ff;
+            --text: #ffffff;
+            --text-muted: #8F9BB3;
+            --gold: #ffcc00;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
+        body { background: var(--bg); color: var(--text); overflow-x: hidden; min-height: 100vh; }
+
+        /* Background Glows */
+        .bg-glow {
+            position: fixed; width: 400px; height: 400px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(112, 0, 255, 0.15), transparent 70%);
+            filter: blur(50px); z-index: -1; animation: float 10s infinite alternate;
+        }
+
+        /* --- AUTH / LOGIN SCREEN --- */
+        #auth-screen {
+            position: fixed; top:0; left:0; width:100%; height:100%; background: var(--bg);
+            display: flex; justify-content: center; align-items: center; z-index: 999; padding: 20px;
+        }
+        .auth-card {
+            background: var(--card); padding: 40px 30px; border-radius: 28px; width: 100%; max-width: 380px;
+            text-align: center; border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(20px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        .auth-card h1 { font-size: 28px; font-weight: 900; letter-spacing: 2px; margin-bottom: 8px; color: var(--neon-blue); }
+        .auth-card p { color: var(--text-muted); font-size: 14px; margin-bottom: 25px; }
+        .auth-input {
+            width: 100%; padding: 16px; margin-bottom: 16px; border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.1); background: rgba(0,0,0,0.4);
+            color: white; font-size: 14px; outline: none; transition: 0.3s;
+        }
+        .auth-input:focus { border-color: var(--neon-blue); box-shadow: 0 0 10px rgba(0, 242, 255, 0.2); }
+
+        /* --- MAIN DASHBOARD INTERFACE --- */
+        #dashboard-screen { display: none; }
+        .header {
+            padding: 20px; display: flex; justify-content: space-between; align-items: center;
+            background: rgba(10, 15, 28, 0.9); border-bottom: 1px solid rgba(255,255,255,0.08);
+            position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px);
+        }
+        .logo { font-size: 24px; font-weight: 800; letter-spacing: 2px; color: var(--neon-blue); }
+        .balance-card { background: rgba(255,255,255,0.05); padding: 8px 20px; border-radius: 50px; border: 1px solid var(--neon-blue); font-weight: bold; }
+
+        .main-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; padding: 20px; max-width: 1200px; margin: auto; }
+
+        /* Chart & Referral Styling */
+        .panel-card { background: var(--card); padding: 25px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 20px; }
+        .chart-header { display: flex; justify-content: space-between; margin-bottom: 15px; }
+        .price-up { color: #00ff88; font-weight: bold; }
+
+        /* Referral System UI */
+        .ref-box { display: flex; gap: 10px; margin-top: 15px; }
+        .ref-url { background: rgba(0,0,0,0.4); padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); flex: 1; font-size: 12px; color: var(--neon-blue); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; align-self: center;}
+
+        /* Games Grid */
+        .game-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; }
+        .game-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01));
+            padding: 30px 20px; border-radius: 20px; text-align: center; cursor: pointer;
+            transition: 0.3s; border: 1px solid rgba(255,255,255,0.08);
+        }
+        .game-card:hover { transform: translateY(-5px); border-color: var(--neon-blue); box-shadow: 0 0 20px rgba(0, 242, 255, 0.2); }
+        .game-card i { font-size: 40px; margin-bottom: 15px; color: var(--neon-blue); }
+
+        /* Activity Feed */
+        .feed-item { padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 13px; color: #ccc; }
+        .feed-item b { color: var(--neon-blue); }
+
+        /* Overlay Modals */
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; display: none; justify-content: center; align-items: center; }
+        .modal-content { background: #101623; padding: 40px; border-radius: 30px; text-align: center; position: relative; max-width: 400px; width: 90%; border: 1px solid rgba(255,255,255,0.08); }
+
+        /* Spin Wheel Dynamic */
+        .wheel-container { width: 250px; height: 250px; border: 5px solid #fff; border-radius: 50%; margin: 20px auto; position: relative; transition: 4s cubic-bezier(0.1, 0.9, 0.1, 1); }
+        .wheel-pointer { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 20px; height: 30px; background: red; clip-path: polygon(50% 100%, 0 0, 100% 0); z-index: 10; }
+
+        .btn-action {
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
+            color: black; border: none; padding: 15px 35px; border-radius: 50px; font-weight: bold; cursor: pointer; transition: 0.3s;
+        }
+        .btn-action:hover { opacity: 0.9; transform: scale(1.02); }
+
+        @keyframes float { from { transform: translate(0, 0); } to { transform: translate(60px, 40px); } }
+        @media (max-width: 768px) { .main-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+<div class="bg-glow" style="top: 10%; left: 10%;"></div>
+<div class="bg-glow" style="bottom: 10%; right: 10%;"></div>
+
+<div id="auth-screen">
+    <div class="auth-card">
+        <h1>CEYLON RS</h1>
+        <p>Create or login to your secure Web3 vault</p>
+        <input type="email" id="auth-email" class="auth-input" placeholder="Enter Gmail Address">
+        <input type="password" id="auth-password" class="auth-input" placeholder="Create Access Password">
+        <button class="btn-action" style="width: 100%; margin-top: 10px;" onclick="handleAuth()">ENTER ECOSYSTEM</button>
+    </div>
+</div>
+
+<div id="dashboard-screen">
+    <header class="header">
+        <div class="logo">CEYLON <span style="color: #fff;">RS</span></div>
+        <div class="balance-card">
+            <i class="fa-solid fa-wallet" style="color: #00f2ff; margin-right: 8px;"></i>
+            <span id="crs-balance">0.00</span> <small>CRS</small>
+        </div>
+    </header>
+
+    <div class="main-grid">
+        <div class="content-left">
+            <div class="panel-card">
+                <div class="chart-header">
+                    <div>
+                        <h3>CRS / USDT <small style="color: #888;">Live Market</small></h3>
+                        <h2 id="live-price">$0.00427 <span class="price-up" id="price-change">+1.24%</span></h2>
+                    </div>
+                    <div>
+                        <button class="btn-action" style="padding: 8px 20px; font-size: 12px;" onclick="dailyReward()">DAILY BONUS</button>
+                    </div>
+                </div>
+                <canvas id="crsChart" height="130"></canvas>
+            </div>
+
+            <div class="panel-card">
+                <h3><i class="fa-solid fa-share-nodes" style="color: var(--neon-blue); margin-right: 8px;"></i> REFERRAL ENGINE</h3>
+                <p style="font-size: 13px; color: var(--text-muted); margin-top: 5px;">Invite partners to earn commission assets instantly.</p>
+                <div class="ref-box">
+                    <div class="ref-url" id="ref-link-display">Generating link...</div>
+                    <button class="btn-action" style="padding: 10px 20px; border-radius: 12px;" onclick="copyReferral()">COPY</button>
+                </div>
+            </div>
+
+            <div class="game-grid">
+                <div class="game-card" onclick="openGame()">
+                    <i class="fa-solid fa-circle-dot"></i>
+                    <h4>LUCKY SPIN</h4>
+                    <p style="font-size: 11px; color: #888;">Win CRS Tokens</p>
+                </div>
+                <div class="game-card" onclick="alert('Mines Game Launching Soon!')">
+                    <i class="fa-solid fa-burst"></i>
+                    <h4>CRS MINES</h4>
+                    <p style="font-size: 11px; color: #888;">Avoid Bombs</p>
+                </div>
+                <div class="game-card" onclick="alert('Scratch Cards Launching Soon!')">
+                    <i class="fa-solid fa-ticket"></i>
+                    <h4>SCRATCH</h4>
+                    <p style="font-size: 11px; color: #888;">Instant Win</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel-card" style="height: fit-content;">
+            <h3 style="margin-bottom: 15px; font-size: 16px;"><i class="fa-solid fa-bolt" style="color: #00f2ff;"></i> LIVE TRANSMISSIONS</h3>
+            <div id="activity-feed"></div>
+        </div>
+    </div>
+</div>
+
+<div id="game-overlay" class="overlay">
+    <div class="modal-content">
+        <h2>LUCKY SPIN</h2>
+        <div style="position: relative;">
+            <div class="wheel-pointer"></div>
+            <canvas id="wheel-canvas" class="wheel-container" width="250" height="250"></canvas>
+        </div>
+        <button id="spin-btn" class="btn-action" onclick="spinWheel()">SPIN NOW</button>
+        <button class="btn-action" style="background: transparent; color: #fff; border: 1px solid #444;" onclick="closeGame()">CLOSE</button>
+    </div>
+</div>
+
+<script>
+    // ==========================================
+    // ⚙️ ADJUSTABLE SETTINGS (ඔයාට ඕන වෙලාවක වෙනස් කරන්න පුළුවන්)
+    // ==========================================
+    const REFERRAL_REWARD_POINTS = 50.00; // රෙෆරල් ලින්ක් එකෙන් එන කෙනෙකුට දෙන පොයින්ට්ස් ගාන
+
+    let balance = parseFloat(localStorage.getItem('web_crs_balance')) || 0.00;
+    let currentUser = localStorage.getItem('web_crs_user') || "";
+
+    // --- APPLICATION INITIALIZATION ---
+    window.onload = function() {
+        checkReferralBonus();
+        if (currentUser) {
+            showDashboard();
+        }
+    }
+
+    // --- 1. AUTH SYSTEM (SIGNUP / LOGIN) ---
+    function handleAuth() {
+        let email = document.getElementById('auth-email').value.trim();
+        let pass = document.getElementById('auth-password').value.trim();
+
+        if (email === "" || !email.includes("@") || pass.length < 4) {
+            alert("Please enter a valid email and a password (min 4 characters).");
+            return;
+        }
+
+        // දත්ත බ්‍රවුසර් එකේ ආරක්ෂිතව සේව් කිරීම
+        localStorage.setItem('web_crs_user', email);
+        currentUser = email;
+        
+        // මුල්ම වතාවට ලොග් වෙද්දී බැලන්ස් එක 0 නම් නොමිලේ 10 CRS දීම (Welcome Bonus)
+        if(balance === 0) {
+            balance = 10.00;
+            localStorage.setItem('web_crs_balance', balance);
+        }
+
+        showDashboard();
+    }
+
+    function showDashboard() {
+        document.getElementById('auth-screen').style.display = 'none';
+        document.getElementById('dashboard-screen').style.display = 'block';
+        document.getElementById('crs-balance').innerText = balance.toFixed(2);
+        
+        // ප්ලෙයර්ගේ නම අනුව යුනික් රෙෆරල් ලින්ක් එකක් සෑදීම
+        let username = currentUser.split('@')[0];
+        let refLink = window.location.origin + window.location.pathname + "?ref=" + username;
+        document.getElementById('ref-link-display').innerText = refLink;
+
+        initChart();
+    }
+
+    // --- 2. REFERRAL DETECTION ENGINE ---
+    function checkReferralBonus() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const referrer = urlParams.get('ref');
+        
+        // කලින් රෙෆරල් බෝනස් එකක් අරන් නැති අලුත් කෙනෙක් නම් විතරක් බෝනස් දීම
+        if (referrer && !localStorage.getItem('web_crs_referred_done')) {
+            balance += REFERRAL_REWARD_POINTS;
+            localStorage.setItem('web_crs_balance', balance);
+            localStorage.setItem('web_crs_referred_done', 'true');
+            alert(`Welcome! You received ${REFERRAL_REWARD_POINTS} CRS via Referral Bonus from ${referrer}!`);
+        }
+    }
+
+    function copyReferral() {
+        let linkText = document.getElementById('ref-link-display').innerText;
+        navigator.clipboard.writeText(linkText);
+        alert("Referral Link copied to clipboard successfully!");
+    }
+
+    // --- 3. LIVE SIMULATED CHART ---
+    let crsChart;
+    function initChart() {
+        const ctx = document.getElementById('crsChart').getContext('2d');
+        let chartData = [4.1, 4.3, 4.2, 4.5, 4.4, 4.6, 4.2, 4.7];
+        crsChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['', '', '', '', '', '', '', ''],
+                datasets: [{
+                    data: chartData,
+                    borderColor: '#00f2ff',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    fill: true,
+                    backgroundColor: 'rgba(0, 242, 255, 0.08)'
+                }]
+            },
+            options: { plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { display: false } } }
+        });
+
+        setInterval(() => {
+            let lastPrice = chartData[chartData.length - 1];
+            let nextPrice = lastPrice + (Math.random() - 0.5) * 0.15;
+            if(nextPrice < 0.1) nextPrice = 0.5;
+            chartData.push(nextPrice);
+            chartData.shift();
+            crsChart.update();
+            document.getElementById('live-price').innerText = `$${nextPrice.toFixed(5)}`;
+        }, 3000);
+    }
+
+    // --- 4. LIVE FEED ---
+    const names = ["Nalin99", "Crypto_King", "Shalu_R", "Sampath_X", "Amila_Dev", "RS_Payer", "Kasun_Web3"];
+    const feeds = document.getElementById('activity-feed');
+    function addFeed() {
+        if(!feeds) return;
+        let name = names[Math.floor(Math.random() * names.length)];
+        let win = (Math.random() * 30).toFixed(2);
+        let div = document.createElement('div');
+        div.className = 'feed-item';
+        div.innerHTML = `<b>${name}</b> just secured <b>${win} CRS</b> assets`;
+        feeds.prepend(div);
+        if (feeds.children.length > 6) feeds.lastChild.remove();
+    }
+    setInterval(addFeed, 4000);
+
+    // --- 5. WHEEL SYSTEM ---
+    function openGame() { document.getElementById('game-overlay').style.display = 'flex'; drawWheel(); }
+    function closeGame() { document.getElementById('game-overlay').style.display = 'none'; }
+
+    const wheelCanvas = document.getElementById('wheel-canvas');
+    const wctx = wheelCanvas.getContext('2d');
+    const rewards = ["10", "0", "50", "5", "JACKPOT", "10", "20", "0"];
+    const colors = ["#101623", "#1b2135", "#101623", "#1b2135", "#ffcc00", "#101623", "#1b2135", "#101623"];
+
+    function drawWheel() {
+        let angle = (2 * Math.PI) / rewards.length;
+        for (let i = 0; i < rewards.length; i++) {
+            wctx.beginPath(); wctx.moveTo(125, 125);
+            wctx.arc(125, 125, 125, i * angle, (i + 1) * angle);
+            wctx.fillStyle = colors[i]; wctx.fill();
+            wctx.save(); wctx.translate(125, 125); wctx.rotate(i * angle + angle / 2);
+            wctx.fillStyle = colors[i] === "#ffcc00" ? "#000" : "#fff";
+            wctx.font = "bold 12px Arial"; wctx.fillText(rewards[i], 70, 5); wctx.restore();
+        }
+    }
+
+    let rotation = 0;
+    function spinWheel() {
+        let btn = document.getElementById('spin-btn');
+        btn.disabled = true;
+        let extraRot = Math.floor(Math.random() * 360) + 1800;
+        rotation += extraRot;
+        wheelCanvas.style.transform = `rotate(${rotation}deg)`;
+        
+        setTimeout(() => {
+            btn.disabled = false;
+            let win = Math.floor(Math.random() * 25);
+            balance += win;
+            localStorage.setItem('web_crs_balance', balance);
+            document.getElementById('crs-balance').innerText = balance.toFixed(2);
+            alert("Congratulations! You Won " + win + " CRS!");
+        }, 4000);
+    }
+
+    function dailyReward() {
+        let lastClaim = localStorage.getItem('web_crs_daily');
+        let today = new Date().toDateString();
+        if (lastClaim === today) {
+            alert("Daily vault is locked. Return tomorrow!");
+        } else {
+            balance += 15;
+            localStorage.setItem('web_crs_balance', balance);
+            localStorage.setItem('web_crs_daily', today);
+            document.getElementById('crs-balance').innerText = balance.toFixed(2);
+            alert("Success! 15 CRS added to your vault.");
+        }
+    }
+</script>
+</body>
+</html>
+
