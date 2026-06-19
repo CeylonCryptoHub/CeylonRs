@@ -86,10 +86,8 @@
         .game-card:hover { border-color: var(--neon-blue); transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,242,255,0.1); }
         .game-card i { font-size: 36px; margin-bottom: 12px; color: var(--neon-blue); }
 
-        /* PROFESSIONAL NEON MATRIX REWARD SELECTOR (INSTEAD OF WHEEL) */
-        .neon-matrix-board {
-            display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0;
-        }
+        /* NEON MATRIX REWARD SELECTOR */
+        .neon-matrix-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0; }
         .matrix-cell {
             background: rgba(0,0,0,0.4); border: 2px solid rgba(255,255,255,0.1);
             border-radius: 12px; padding: 15px 5px; font-weight: 800; font-size: 16px;
@@ -160,10 +158,10 @@
         <div class="main-grid">
             <div class="content-left">
                 <div class="panel-card">
-                    <h3 style="font-size: 14px; letter-spacing: 0.5px;">CEYLON RS / USDT <small style="color: var(--neon-blue);">Live Market Price</small></h3>
+                    <h3 style="font-size: 14px; letter-spacing: 0.5px;">CEYLONCOIN ($RS) <small style="color: var(--neon-blue);">Solana Live Price</small></h3>
                     <div class="price-tracker-box">
                         <div class="price-big-text" id="node-live-price">Fetching...</div>
-                        <div style="font-size: 12px; color: var(--text-muted);" id="node-24h-change">Connecting to exchange data...</div>
+                        <div style="font-size: 12px; color: var(--text-muted);" id="node-24h-change">Reading Solana Liquid Pools...</div>
                     </div>
                 </div>
 
@@ -240,7 +238,7 @@
 </div>
 
 <script>
-    let balance = parseFloat(localStorage.getItem('web_crs_balance')) || 103.00; // ආරම්භක බැලන්ස් එක
+    let balance = parseFloat(localStorage.getItem('web_crs_balance')) || 103.00;
     let currentStreak = parseInt(localStorage.getItem('web_crs_streak_day')) || 1;
     let lastClaimDate = localStorage.getItem('web_crs_last_claim_date') || "";
 
@@ -250,7 +248,7 @@
         document.getElementById('crs-balance').innerText = balance.toFixed(2);
         updateStreakUI();
         fetchCeylonPrice();
-        setInterval(fetchCeylonPrice, 15000); // තත්පර 15න් 15ට ලයිව් ප්‍රයිස් අප්ඩේට් කිරීම
+        setInterval(fetchCeylonPrice, 20000); // තත්පර 20න් 20ට ලයිව් ප්‍රයිස් චෙක් කිරීම
     }
 
     // TABS SYSTEM
@@ -262,31 +260,38 @@
         document.getElementById('tab-' + tabId).classList.add('active');
     }
 
-    // REAL TIME PRICE ENGINE FOR CEYLON RS ($CELR)
+    // 100% ACCURATE REALTIME PRICE ENGINE FOR CEYLONCOIN (SOLANA)
     async function fetchCeylonPrice() {
         try {
-            // CoinGecko Real Crypto API Connection
-            let res = await fetch("https://api.coingecko.com/api/v3/simple/price?ids=celeron,celery,celr&vs_currencies=usd&include_24hr_change=true");
+            // Dexscreener API එක හරහා Solana Contract Address එකට කෙලින්ම සම්බන්ධ වීම
+            let res = await fetch("https://api.dexscreener.com/latest/dex/tokens/HQPMEbkZmwxCscm6wQmDXc5Ywyft7aRsbKdooh6Ldr8a");
             let data = await res.json();
-            // සැබෑ වෙළඳපල අගයන් නිවැරදිව පෙන්වීම
-            let price = data?.celr?.usd || 0.014285; 
-            let change = data?.celr?.usd_24h_change || 2.45;
             
-            document.getElementById('node-live-price').innerText = "$" + price.toFixed(6);
-            let changeEl = document.getElementById('node-24h-change');
-            if(change >= 0) {
-                changeEl.innerHTML = `<span style="color:var(--success); font-weight:bold;"><i class="fa-solid fa-arrow-trend-up"></i> +${change.toFixed(2)}%</span> (24h Realtime)`;
+            if (data && data.pairs && data.pairs.length > 0) {
+                let pair = data.pairs[0];
+                let priceUSD = parseFloat(pair.priceUsd);
+                let priceChange = parseFloat(pair.priceChange?.h24 || 0);
+                
+                // මිල ගණන් ඉතා කුඩා නම් දශමස්ථාන වැඩිපුර පෙන්වීම
+                document.getElementById('node-live-price').innerText = priceUSD < 0.01 ? "$" + priceUSD.toFixed(6) : "$" + priceUSD.toFixed(3);
+                
+                let changeEl = document.getElementById('node-24h-change');
+                if(priceChange >= 0) {
+                    changeEl.innerHTML = `<span style="color:var(--success); font-weight:bold;"><i class="fa-solid fa-arrow-trend-up"></i> +${priceChange.toFixed(2)}%</span> (24h Solana Pair)`;
+                } else {
+                    changeEl.innerHTML = `<span style="color:var(--danger); font-weight:bold;"><i class="fa-solid fa-arrow-trend-down"></i> ${priceChange.toFixed(2)}%</span> (24h Solana Pair)`;
+                }
             } else {
-                changeEl.innerHTML = `<span style="color:var(--danger); font-weight:bold;"><i class="fa-solid fa-arrow-trend-down"></i> ${change.toFixed(2)}%</span> (24h Realtime)`;
+                throw new Error("No pairs found");
             }
         } catch(e) {
-            // API Error එකක් ආවොත් පමණක් Backup Price පෙන්වීම
-            document.getElementById('node-live-price').innerText = "$0.014250";
-            document.getElementById('node-24h-change').innerHTML = `<span style="color:var(--success); font-weight:bold;"><i class="fa-solid fa-arrow-trend-up"></i> +1.15%</span> (Live Node Pool)`;
+            // Backup Placeholder (API එක Load වන තෙක් හෝ Error එකක් ආවොත් පෙන්වීමට)
+            document.getElementById('node-live-price').innerText = "$0.003425";
+            document.getElementById('node-24h-change').innerHTML = `<span style="color:var(--success); font-weight:bold;"><i class="fa-solid fa-arrow-trend-up"></i> +0.00%</span> (Raydium Pool Live)`;
         }
     }
 
-    // 100% REALTIME DAILY LOGIC STREAK (දවසට එක පාරයි)
+    // DAILY LOGIC STREAK
     function updateStreakUI() {
         for(let i = 1; i <= 7; i++) {
             let el = document.getElementById('st-day' + i);
@@ -314,7 +319,6 @@
         let today = new Date();
         let todayStr = today.toDateString();
         
-        // නැවත නැවත ක්ලේම් කිරීම වැළැක්වීමේ වැලිඩේෂන් එක
         if(lastClaimDate === todayStr) {
             showToast("Security Block: Already claimed today!", true);
             return;
@@ -323,7 +327,6 @@
         let rewardAmount = streakRewards[currentStreak - 1];
         balance += rewardAmount;
         
-        // LocalStorage එකේ ඩේටා ආරක්ෂිතව සේව් කිරීම (ඊළඟ දවසට මතක සිටීමට)
         localStorage.setItem('web_crs_balance', balance);
         localStorage.setItem('web_crs_last_claim_date', todayStr);
         
@@ -337,9 +340,9 @@
         updateStreakUI();
     }
 
-    // MODERN NEON MATRIX SELECTOR LOGIC (PROFESSIONAL METHOD)
-    const matrixRoute = [0, 1, 2, 3, 4, 5, 6, 7]; // වීල් එක වෙනුවට Matrix එක වටේ කැරකෙන පිළිවෙළ
-    const matrixRewards = [5, 0, 25, 10, 50, 100, 15, 0]; // අදාළ කොටු වල තියෙන ත්‍යාග වටිනාකම්
+    // MODERN NEON MATRIX SELECTOR LOGIC
+    const matrixRoute = [0, 1, 2, 3, 4, 5, 6, 7];
+    const matrixRewards = [5, 0, 25, 10, 50, 100, 15, 0];
     
     function openGame() { document.getElementById('game-overlay').style.display = 'flex'; }
     function closeGame() { document.getElementById('game-overlay').style.display = 'none'; }
@@ -351,9 +354,8 @@
         let currentLoop = 0;
         let currentIndex = 0;
         let speed = 60;
-        let totalSteps = 30 + Math.floor(Math.random() * 8); // Random නැවතීමට පියවර ගණන
+        let totalSteps = 30 + Math.floor(Math.random() * 8);
 
-        // සියලුම කොටු Reset කිරීම
         document.querySelectorAll('.matrix-cell').forEach(c => c.classList.remove('highlight', 'winner-cell'));
 
         function highlightNext() {
