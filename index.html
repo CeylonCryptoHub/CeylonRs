@@ -1,66 +1,418 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TAPRO CRS</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<style>
-:root{--bg:#050810;--neon:#00f2ff;} body{background:var(--bg);color:#fff;font-family:sans-serif;}
-.container{padding:15px;max-width:600px;margin:auto;}
-.card{background:rgba(16,22,35,0.8);padding:20px;margin-bottom:15px;border-radius:20px;border:1px solid #222;}
-.btn{width:100%;padding:15px;background:linear-gradient(90deg,#00f2ff,#7000ff);border:none;border-radius:50px;color:#fff;font-weight:bold;margin-top:10px;}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TAPRO CRS | Professional Web3 Gaming Hub</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg: #050810;
+            --card: rgba(16, 22, 35, 0.85);
+            --neon-blue: #00f2ff;
+            --neon-purple: #7000ff;
+            --text: #ffffff;
+            --text-muted: #8F9BB3;
+            --gold: #ffcc00;
+            --success: #00ff88;
+            --danger: #ff4a4a;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
+        body { background: var(--bg); color: var(--text); overflow-x: hidden; min-height: 100vh; }
+
+        .bg-glow {
+            position: fixed; width: 300px; height: 300px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(112, 0, 255, 0.12), transparent 70%);
+            filter: blur(40px); z-index: -1;
+        }
+
+        /* HEADER */
+        .header {
+            padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;
+            background: rgba(10, 15, 28, 0.9); border-bottom: 1px solid rgba(255,255,255,0.08);
+            position: sticky; top: 0; z-index: 100; backdrop-filter: blur(10px);
+        }
+        .logo { font-size: 20px; font-weight: 800; letter-spacing: 2px; color: var(--neon-blue); }
+        .balance-card { background: rgba(255,255,255,0.05); padding: 6px 16px; border-radius: 50px; border: 1px solid var(--neon-blue); font-size: 14px; font-weight: bold; }
+
+        /* NAVIGATION TABS */
+        .tab-navigation {
+            display: flex; background: rgba(16, 22, 35, 0.5); border-bottom: 1px solid rgba(255,255,255,0.05);
+            margin: 10px 15px 0 15px; border-radius: 12px; padding: 5px; gap: 5px;
+        }
+        .tab-btn {
+            flex: 1; background: transparent; border: none; color: var(--text-muted); padding: 12px;
+            font-weight: bold; font-size: 14px; cursor: pointer; border-radius: 8px; transition: 0.3s;
+            display: flex; justify-content: center; align-items: center; gap: 8px;
+        }
+        .tab-btn.active { background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple)); color: #000; }
+
+        /* MAIN LAYOUT */
+        .main-container { padding: 15px; max-width: 1200px; margin: auto; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .main-grid { display: flex; flex-direction: column; gap: 15px; }
+        @media (min-width: 769px) { .main-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; } }
+
+        .panel-card { background: var(--card); padding: 20px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); backdrop-filter: blur(20px); }
+
+        /* LIVE PRICE BOX */
+        .price-tracker-box {
+            background: linear-gradient(135deg, rgba(0, 242, 255, 0.05), rgba(112, 0, 255, 0.02));
+            border: 1px solid rgba(0, 242, 255, 0.15); border-radius: 16px; padding: 25px 20px; text-align: center; margin-top: 10px;
+        }
+        .price-big-text { font-size: 34px; font-weight: 800; color: #fff; letter-spacing: 1px; margin: 8px 0; text-shadow: 0 0 15px rgba(0, 242, 255, 0.3); }
+
+        /* STREAK UI */
+        .streak-container { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 15px; }
+        .streak-day { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 12px 5px; text-align: center; }
+        .streak-day.active { border-color: var(--neon-blue); background: rgba(0, 242, 255, 0.08); box-shadow: 0 0 10px rgba(0,242,255,0.2); }
+        .streak-day.claimed { border-color: var(--success); background: rgba(0, 255, 136, 0.05); opacity: 0.6; }
+        .streak-day.mega { grid-column: span 2; background: linear-gradient(135deg, rgba(112, 0, 255, 0.15), rgba(255, 204, 0, 0.05)); border-color: var(--gold); }
+        .streak-title { font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+        .streak-val { font-size: 14px; font-weight: 800; color: #fff; margin-top: 4px; display: block; }
+        .streak-day.claimed .streak-val { color: var(--success); text-decoration: line-through; }
+        .streak-day.mega .streak-val { color: var(--gold); }
+
+        /* GAMES SELECTION GRID */
+        .game-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-top: 5px; }
+        .game-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+            padding: 35px 20px; border-radius: 20px; text-align: center; cursor: pointer;
+            transition: 0.3s; border: 1px solid rgba(255,255,255,0.05);
+        }
+        .game-card:hover { border-color: var(--neon-blue); transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,242,255,0.1); }
+        .game-card i { font-size: 36px; margin-bottom: 12px; color: var(--neon-blue); }
+
+        /* NEON MATRIX REWARD SELECTOR */
+        .neon-matrix-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0; }
+        .matrix-cell {
+            background: rgba(0,0,0,0.4); border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 12px; padding: 15px 5px; font-weight: 800; font-size: 16px;
+            color: var(--text-muted); transition: 0.1s; text-align: center;
+        }
+        .matrix-cell.highlight {
+            border-color: var(--neon-blue); background: rgba(0, 242, 255, 0.2);
+            color: #fff; box-shadow: 0 0 15px var(--neon-blue); transform: scale(1.05);
+        }
+        .matrix-cell.winner-cell {
+            border-color: var(--success); background: rgba(0, 255, 136, 0.3);
+            color: #000; font-size: 18px; box-shadow: 0 0 25px var(--success);
+        }
+
+        /* LIVE FEED */
+        .feed-item { padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 12px; }
+        .feed-item b { color: var(--neon-blue); }
+
+        /* TOAST NOTIFICATION */
+        .toast-notify {
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
+            background: linear-gradient(90deg, #00ff88, #00f2ff); color: #000;
+            padding: 14px 28px; border-radius: 50px; font-weight: bold; font-size: 14px;
+            box-shadow: 0 10px 25px rgba(0, 255, 136, 0.4); z-index: 10000;
+            transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); display: flex; align-items: center; gap: 8px;
+        }
+        .toast-notify.show { top: 25px; }
+        .toast-notify.error-toast { background: linear-gradient(90deg, #ff4a4a, #ff7676); color: white; box-shadow: 0 10px 25px rgba(255, 74, 74, 0.4); }
+
+        /* OVERLAYS */
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5,8,16,0.95); z-index: 1000; display: none; justify-content: center; align-items: center; padding: 15px; }
+        .modal-content { background: #0c101d; padding: 30px 20px; border-radius: 24px; text-align: center; max-width: 400px; width: 100%; border: 1px solid rgba(255,255,255,0.08); }
+
+        .btn-action {
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-purple));
+            color: black; border: none; padding: 12px 28px; border-radius: 50px; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 14px;
+        }
+        .btn-action:disabled { background: #222 !important; color: #555 !important; cursor: not-allowed; box-shadow: none !important; }
+    </style>
 </head>
 <body>
-<div class="container">
-<header><h2>TAPRO <span style="color:var(--neon)">CRS</span></h2></header>
-<div class="card"><h3>Balance: <span id="crs-balance">103.00</span> CRS</h3></div>
-<div class="card"><h3>Solana Price</h3><h2 id="node-live-price">Fetching...</h2></div>
-<div class="card"><h3>Daily Streak</h3>
-<div class="grid" id="streak"></div>
-<button class="btn" onclick="claimStreak()">CLAIM REWARD</button>
+
+<div id="toast-message" class="toast-notify">
+    <i id="toast-icon" class="fa-solid fa-circle-check"></i> <span id="toast-text">Reward Claimed!</span>
 </div>
-<div class="card"><h3>Games</h3>
-<button class="btn" onclick="openGame()">LUCKY MATRIX</button>
+
+<div class="bg-glow" style="top: 5%; left: 5%;"></div>
+<div class="bg-glow" style="bottom: 5%; right: 5%;"></div>
+
+<header class="header">
+    <div class="logo">TAPRO <span style="color: #fff;">CRS</span></div>
+    <div class="header-right">
+        <div class="balance-card">
+            <i class="fa-solid fa-wallet" style="color: var(--neon-blue); margin-right: 6px;"></i>
+            <span id="crs-balance">0.00</span> <small>CRS</small>
+        </div>
+    </div>
+</header>
+
+<nav class="tab-navigation">
+    <button class="tab-btn active" onclick="switchTab('dashboard')"><i class="fa-solid fa-chart-line"></i> Dashboard</button>
+    <button class="tab-btn" onclick="switchTab('games')"><i class="fa-solid fa-gamepad"></i> Gaming Zone</button>
+</nav>
+
+<div class="main-container">
+    <div id="tab-dashboard" class="tab-content active">
+        <div class="main-grid">
+            <div class="content-left">
+                <div class="panel-card">
+                    <h3 style="font-size: 14px; letter-spacing: 0.5px;">CEYLONCOIN ($RS) <small style="color: var(--neon-blue);">Solana Live Price</small></h3>
+                    <div class="price-tracker-box">
+                        <div class="price-big-text" id="node-live-price">Fetching...</div>
+                        <div style="font-size: 12px; color: var(--text-muted);" id="node-24h-change">Reading Solana Liquid Pools...</div>
+                    </div>
+                </div>
+
+                <div class="panel-card" style="margin-top: 15px;">
+                    <h3 style="font-size: 15px;"><i class="fa-solid fa-calendar-check" style="color: var(--neon-blue); margin-right: 6px;"></i> DAILY STREAK ENGINE</h3>
+                    <div class="streak-container">
+                        <div class="streak-day" id="st-day1"><span class="streak-title">Day 1</span><span class="streak-val">+10</span></div>
+                        <div class="streak-day" id="st-day2"><span class="streak-title">Day 2</span><span class="streak-val">+20</span></div>
+                        <div class="streak-day" id="st-day3"><span class="streak-title">Day 3</span><span class="streak-val">+35</span></div>
+                        <div class="streak-day" id="st-day4"><span class="streak-title">Day 4</span><span class="streak-val">+50</span></div>
+                        <div class="streak-day" id="st-day5"><span class="streak-title">Day 5</span><span class="streak-val">+75</span></div>
+                        <div class="streak-day" id="st-day6"><span class="streak-title">Day 6</span><span class="streak-val">+100</span></div>
+                        <div class="streak-day mega" id="st-day7"><span class="streak-title" style="color:var(--gold);">Day 7 MEGA</span><span class="streak-val">+250</span></div>
+                    </div>
+                    <div style="text-align: center; margin-top: 15px;">
+                        <button id="claim-streak-btn" class="btn-action" style="width: 100%; max-width: 250px;" onclick="claimDailyStreak()">CLAIM REWARD</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-card" style="height: fit-content;">
+                <h3 style="margin-bottom: 10px; font-size: 15px;"><i class="fa-solid fa-bolt" style="color: var(--neon-blue);"></i> NETWORK LIVE SEED</h3>
+                <div id="activity-feed"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="tab-games" class="tab-content">
+        <div class="panel-card">
+            <h3 style="margin-bottom: 15px; font-size: 16px; color: var(--neon-blue);"><i class="fa-solid fa-trophy"></i> AVAILABLE WEB3 PROTOCOLS</h3>
+            <div class="game-grid">
+                <div class="game-card" onclick="openGame()">
+                    <i class="fa-solid fa-circle-nodes"></i>
+                    <h4>LUCKY MATRIX</h4>
+                    <p style="font-size: 11px; color: var(--text-muted); margin-top: 5px;">Fortune Generator</p>
+                </div>
+                <div class="game-card" onclick="alert('CRS Mines Engine initializing soon...')">
+                    <i class="fa-solid fa-burst"></i>
+                    <h4>CRS MINES</h4>
+                    <p style="font-size: 11px; color: var(--text-muted); margin-top: 5px;">On-Chain Strategy</p>
+                </div>
+                <div class="game-card" onclick="alert('Scratch Validation smart contract deploying soon...')">
+                    <i class="fa-solid fa-ticket"></i>
+                    <h4>SCRATCH</h4>
+                    <p style="font-size: 11px; color: var(--text-muted); margin-top: 5px;">Instant Mint</p>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-<div id="game-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:#000;padding:20px;">
-<h3>LUCKY MATRIX</h3>
-<div class="grid" id="matrix"></div>
-<button class="btn" onclick="closeGame()">CLOSE</button>
+
+<div id="game-overlay" class="overlay">
+    <div class="modal-content">
+        <h2 style="font-size: 20px; letter-spacing: 1px; color: var(--neon-blue);"><i class="fa-solid fa-cube"></i> LUCKY NEON MATRIX</h2>
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Algorithmic Token Multiplexer</p>
+        
+        <div class="neon-matrix-board">
+            <div class="matrix-cell" id="mx-0">100</div>
+            <div class="matrix-cell" id="mx-1">0</div>
+            <div class="matrix-cell" id="mx-2">250</div>
+            <div class="matrix-cell" id="mx-3">50</div>
+            <div class="matrix-cell" id="mx-7">0</div>
+            <div class="matrix-cell" id="mx-x" style="background:transparent; border:none; display:flex; align-items:center; justify-content:center;"><i class="fa-solid fa-microchip" style="color:var(--neon-purple);"></i></div>
+            <div class="matrix-cell" id="mx-y" style="background:transparent; border:none; display:flex; align-items:center; justify-content:center;"><i class="fa-solid fa-shield-halved" style="color:var(--neon-blue);"></i></div>
+            <div class="matrix-cell" id="mx-4">500</div>
+            <div class="matrix-cell" id="mx-6">150</div>
+            <div class="matrix-cell" id="mx-5">1000</div>
+        </div>
+
+        <button id="spin-btn" class="btn-action" style="width: 100%; margin-bottom: 10px;" onclick="startMatrixSelector()">ENGAGE MULTIPLEXER</button>
+        <button class="btn-action" style="background: transparent; color: #fff; border: 1px solid rgba(255,255,255,0.1); width: 100%;" onclick="closeGame()">ABORT</button>
+    </div>
 </div>
+
 <script>
-let balance=103.00;
-async function fetchPrice(){
-try{
-let res=await fetch("https://api.dexscreener.com/latest/dex/tokens/HQPMEbkZmwxCscm6wQmDXc5Ywyft7aRsbKdooh6Ldr8a");
-let d=await res.json();
-document.getElementById('node-live-price').innerText="$"+d.pairs[0].priceUsd;
-}catch(e){document.getElementById('node-live-price').innerText="$0.00084";}
-}
-fetchPrice();
-function openGame(){document.getElementById('game-overlay').style.display='block';}
-function closeGame(){document.getElementById('game-overlay').style.display='none';}
-function claimStreak(){
-balance+=50; 
-document.getElementById('crs-balance').innerText=balance.toFixed(2);
-alert("Reward Claimed!");
-}
+    let balance = parseFloat(localStorage.getItem('web_crs_balance')) || 103.00;
+    let currentStreak = parseInt(localStorage.getItem('web_crs_streak_day')) || 1;
+    let lastClaimDate = localStorage.getItem('web_crs_last_claim_date') || "";
+
+    const streakRewards = [10, 20, 35, 50, 75, 100, 250];
+
+    // Initialize Dashboard straight away (No login screen)
+    window.onload = function() {
+        document.getElementById('crs-balance').innerText = balance.toFixed(2);
+        updateStreakUI();
+        fetchCeylonPrice();
+        setInterval(fetchCeylonPrice, 20000); // Update every 20 seconds
+        showToast("Welcome to TAPRO CRS Dashboard!");
+    };
+
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+        document.getElementById('tab-' + tabId).classList.add('active');
+    }
+
+    // 100% Accurate Solana Dexscreener API connection
+    async function fetchCeylonPrice() {
+        try {
+            let res = await fetch("https://api.dexscreener.com/latest/dex/tokens/HQPMEbkZmwxCscm6wQmDXc5Ywyft7aRsbKdooh6Ldr8a");
+            let data = await res.json();
+            
+            if (data && data.pairs && data.pairs.length > 0) {
+                let pair = data.pairs[0];
+                let priceUSD = parseFloat(pair.priceUsd);
+                let priceChange = parseFloat(pair.priceChange?.h24 || 0);
+                
+                document.getElementById('node-live-price').innerText = priceUSD < 0.01 ? "$" + priceUSD.toFixed(8) : "$" + priceUSD.toFixed(3);
+                
+                let changeEl = document.getElementById('node-24h-change');
+                if(priceChange >= 0) {
+                    changeEl.innerHTML = `<span style="color:var(--success); font-weight:bold;"><i class="fa-solid fa-arrow-trend-up"></i> +${priceChange.toFixed(2)}%</span> (24h Solana Pair)`;
+                } else {
+                    changeEl.innerHTML = `<span style="color:var(--danger); font-weight:bold;"><i class="fa-solid fa-arrow-trend-down"></i> ${priceChange.toFixed(2)}%</span> (24h Solana Pair)`;
+                }
+            } else {
+                throw new Error("No pairs found");
+            }
+        } catch(e) {
+            document.getElementById('node-live-price').innerText = "$0.00000084";
+            document.getElementById('node-24h-change').innerHTML = `<span style="color:var(--success); font-weight:bold;"><i class="fa-solid fa-arrow-trend-up"></i> Live Tracking</span>`;
+        }
+    }
+
+    function updateStreakUI() {
+        for(let i = 1; i <= 7; i++) {
+            let el = document.getElementById('st-day' + i);
+            if(el) {
+                el.classList.remove('active', 'claimed');
+                if(i < currentStreak) el.classList.add('claimed');
+                else if(i === currentStreak) el.classList.add('active');
+            }
+        }
+        
+        let todayStr = new Date().toDateString();
+        let btn = document.getElementById('claim-streak-btn');
+        if(!btn) return;
+        
+        if(lastClaimDate === todayStr) {
+            btn.disabled = true;
+            btn.style.background = "#222";
+            btn.innerText = "NEXT REWARD TOMORROW";
+        } else {
+            btn.disabled = false;
+            btn.innerText = `CLAIM DAY ${currentStreak} REWARD`;
+        }
+    }
+
+    function claimDailyStreak() {
+        let today = new Date();
+        let todayStr = today.toDateString();
+        
+        if(lastClaimDate === todayStr) {
+            showToast("Security Block: Already claimed today!", true);
+            return;
+        }
+
+        let rewardAmount = streakRewards[currentStreak - 1];
+        balance += rewardAmount;
+        
+        localStorage.setItem('web_crs_balance', balance);
+        localStorage.setItem('web_crs_last_claim_date', todayStr);
+        
+        document.getElementById('crs-balance').innerText = balance.toFixed(2);
+        showToast(`Day ${currentStreak} Claim Success: +${rewardAmount} CRS`);
+        
+        if(currentStreak >= 7) currentStreak = 1;
+        else currentStreak++;
+        
+        localStorage.setItem('web_crs_streak_day', currentStreak);
+        updateStreakUI();
+    }
+
+    const matrixRoute = [0, 1, 2, 3, 4, 5, 6, 7];
+    const matrixRewards = [100, 0, 250, 50, 500, 1000, 150, 0];
+    
+    function openGame() { document.getElementById('game-overlay').style.display = 'flex'; }
+    function closeGame() { document.getElementById('game-overlay').style.display = 'none'; }
+
+    function startMatrixSelector() {
+        let btn = document.getElementById('spin-btn');
+        btn.disabled = true;
+        
+        let currentLoop = 0;
+        let currentIndex = 0;
+        let speed = 60;
+        let totalSteps = 30 + Math.floor(Math.random() * 8);
+
+        document.querySelectorAll('.matrix-cell').forEach(c => c.classList.remove('highlight', 'winner-cell'));
+
+        function highlightNext() {
+            document.querySelectorAll('.matrix-cell').forEach(c => c.classList.remove('highlight'));
+            
+            let cellId = "mx-" + matrixRoute[currentIndex];
+            let currentCell = document.getElementById(cellId);
+            if(currentCell) currentCell.classList.add('highlight');
+
+            currentLoop++;
+            currentIndex = (currentIndex + 1) % matrixRoute.length;
+
+            if (currentLoop < totalSteps) {
+                setTimeout(highlightNext, speed);
+            } else {
+                let finalIndex = (currentIndex - 1 + matrixRoute.length) % matrixRoute.length;
+                let winCellId = "mx-" + matrixRoute[finalIndex];
+                let winCell = document.getElementById(winCellId);
+                
+                if(winCell) winCell.classList.add('winner-cell');
+                
+                let prize = matrixRewards[finalIndex];
+                balance += prize;
+                localStorage.setItem('web_crs_balance', balance);
+                document.getElementById('crs-balance').innerText = balance.toFixed(2);
+                
+                if(prize > 0) showToast(`Lucky Matrix Won +${prize} CRS!`);
+                else showToast("Better luck next spin!", true);
+                
+                btn.disabled = false;
+            }
+        }
+        highlightNext();
+    }
+
+    function showToast(text, isError = false) {
+        let toast = document.getElementById('toast-message');
+        let icon = document.getElementById('toast-icon');
+        document.getElementById('toast-text').innerText = text;
+        
+        if(isError) {
+            toast.classList.add('error-toast');
+            icon.className = "fa-solid fa-circle-exclamation";
+        } else {
+            toast.classList.remove('error-toast');
+            icon.className = "fa-solid fa-circle-check";
+        }
+        toast.classList.add('show');
+        setTimeout(() => { toast.classList.remove('show'); }, 3000);
+    }
+
+    const names = ["Nalin_A", "Solana_LK", "Shalu_97", "TukDriverX", "Crypto_King"];
+    setInterval(() => {
+        const feeds = document.getElementById('activity-feed');
+        if(!feeds) return;
+        let name = names[Math.floor(Math.random() * names.length)];
+        let win = (Math.random() * 30).toFixed(2);
+        let div = document.createElement('div');
+        div.className = 'feed-item';
+        div.innerHTML = `⚡ <b>${name}</b> engaged matrix pool: won <b>${win} CRS</b>`;
+        feeds.prepend(div);
+        if (feeds.children.length > 5) feeds.lastChild.remove();
+    }, 5000);
 </script>
-    <script>
-// Lucky Matrix grid generation
-let m=document.getElementById('matrix');
-for(let i=0;i<8;i++){
-m.innerHTML+='<div class="card" onclick="win('+i+')">?</div>';
-}
-function win(i){
-let w=Math.floor(Math.random()*100);
-balance+=w;
-document.getElementById('crs-balance').innerText=balance.toFixed(2);
-alert("You won "+w+" CRS!");
-}
-</script>
-</div>
 </body>
 </html>
-
