@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ceylon RS v1.5</title>
+<title>Ceylon RS v1.6</title>
 
 <style>
 body{
@@ -23,12 +23,19 @@ position:sticky;
 top:0;
 }
 
-/* CARD */
-.card{
-background:#101623;
+/* WALLET CARD */
+.wallet{
 margin:15px;
-padding:15px;
-border-radius:15px;
+padding:20px;
+border-radius:18px;
+background:linear-gradient(135deg,#0d1422,#101623);
+box-shadow:0 0 20px rgba(0,255,255,0.08);
+}
+
+.balance{
+font-size:26px;
+font-weight:bold;
+color:#00f2ff;
 }
 
 /* BUTTON */
@@ -47,30 +54,37 @@ cursor:pointer;
 display:grid;
 grid-template-columns:repeat(2,1fr);
 gap:10px;
+margin:15px;
 }
 
 .box{
 background:#0d1422;
 padding:15px;
-border-radius:10px;
+border-radius:12px;
 text-align:center;
 cursor:pointer;
-transition:0.3s;
 }
-.box:hover{transform:scale(1.05);}
 
-/* WHEEL */
-#wheel{
-width:180px;
-height:180px;
-border-radius:50%;
-border:5px solid #00f2ff;
-margin:auto;
-display:flex;
-align-items:center;
-justify-content:center;
-transition:4s cubic-bezier(0.1,0.7,0.1,1);
+/* HISTORY */
+.history{
+margin:15px;
+padding:15px;
+background:#101623;
+border-radius:15px;
 }
+
+.item{
+display:flex;
+justify-content:space-between;
+padding:8px 0;
+border-bottom:1px solid rgba(255,255,255,0.05);
+font-size:13px;
+}
+
+.green{color:#00ff88;}
+.red{color:#ff4d4d;}
+.blue{color:#00c2ff;}
+.gold{color:#ffcc00;}
 
 /* SOCIAL BAR */
 .social-bar{
@@ -79,10 +93,9 @@ bottom:0;
 left:0;
 width:100%;
 background:#111827;
-text-align:center;
 padding:10px;
+text-align:center;
 font-size:12px;
-z-index:999;
 }
 
 .center{text-align:center;}
@@ -96,96 +109,101 @@ z-index:999;
 <div>💰 <span id="bal">10</span></div>
 </header>
 
-<!-- SPIN -->
-<div class="card center">
-<h3>Lucky Spin</h3>
-<div id="wheel">SPIN</div>
-<br>
-<button onclick="spin()">SPIN NOW</button>
+<!-- WALLET -->
+<div class="wallet">
+<div>Available Balance</div>
+<div class="balance" id="balance">10.00 CRS</div>
 </div>
 
-<!-- GAMES -->
-<div class="card">
-<h3>Games</h3>
+<!-- ACTIONS -->
 <div class="grid">
+<div class="box" onclick="spin()">🎡 Spin</div>
+<div class="box" onclick="bonus()">🎁 Bonus</div>
 <div class="box">🎯 Mines</div>
 <div class="box">🎟 Scratch</div>
-<div class="box" onclick="bonus()">🎁 Bonus (Ad Reward)</div>
-<div class="box">👥 Referral</div>
-</div>
 </div>
 
-<!-- REF -->
-<div class="card">
-<h3>Referral Link</h3>
-<p id="ref"></p>
+<!-- HISTORY -->
+<div class="history">
+<h4>Transaction History</h4>
+<div id="history"></div>
 </div>
 
 <!-- AD SPACE -->
-<div class="card center">
+<div class="wallet center">
 <p>Ad Banner (300x250)</p>
 </div>
 
-<!-- SOCIAL BAR PLACEHOLDER -->
+<!-- SOCIAL BAR -->
 <div class="social-bar">
-⚡ Adsterra Social Bar Active Zone
+⚡ Ad Zone | Ceylon RS v1.6
 </div>
 
 <script>
 
-let bal=10;
-let rotation=0;
-
-/* REF SYSTEM */
-let urlParams=new URLSearchParams(window.location.search);
-let ref=urlParams.get("ref");
+let bal = 10;
+let history = [];
 
 /* INIT */
-window.onload=()=>{
-document.getElementById("ref").innerText=
-window.location.href+"?ref=ceylonrs";
-
-checkReferral();
+window.onload = () => {
+render();
 }
 
-/* 🔥 AD-BASED BONUS SYSTEM */
+/* ADD TRANSACTION */
+function addHistory(type, amount){
+
+let color = "green";
+if(type === "Bonus") color = "blue";
+if(type === "Referral") color = "gold";
+
+let time = new Date().toLocaleTimeString();
+
+history.unshift({
+type, amount, color, time
+});
+
+render();
+}
+
+/* RENDER UI */
+function render(){
+
+document.getElementById("bal").innerText = bal.toFixed(2) + " CRS";
+
+let html = "";
+history.forEach(h=>{
+html += `
+<div class="item">
+<span class="${h.color}">
+${h.type} +${h.amount}
+</span>
+<span>${h.time}</span>
+</div>`;
+});
+
+document.getElementById("history").innerHTML = html;
+}
+
+/* BONUS (SMARTLINK READY ZONE) */
 function bonus(){
 
-// STEP 1: OPEN AD (SMARTLINK)
-let adWindow = window.open("https://www.profitableratecpm.com/29723325","_blank");
+window.open("https://www.profitableratecpm.com/29723325","_blank");
 
-// STEP 2: WAIT TIME (simulate ad engagement)
-setTimeout(()=>{
-bal += 15;
-document.getElementById("bal").innerText=bal;
-alert("🎁 Ad Reward Added +15 CRS");
-},8000);
+bal += 10;
+addHistory("Bonus",10);
 
-}
-
-/* REFERRAL CHECK (LOGIN STYLE SIMULATION) */
-function checkReferral(){
-if(ref && !localStorage.getItem("ref_done")){
-bal += 20;
-localStorage.setItem("ref_done","yes");
-alert("Referral Bonus +20 CRS from "+ref);
-}
+render();
 }
 
 /* SPIN */
 function spin(){
-let win=Math.floor(Math.random()*30);
 
-rotation+=1800+Math.random()*360;
+let win = Math.floor(Math.random()*30);
+bal += win;
 
-document.getElementById("wheel").style.transform=
-"rotate("+rotation+"deg)";
+addHistory("Spin", win);
 
-setTimeout(()=>{
-bal+=win;
-document.getElementById("bal").innerText=bal;
-alert("You won "+win+" CRS");
-},4000);
+render();
 }
 
 </script>
